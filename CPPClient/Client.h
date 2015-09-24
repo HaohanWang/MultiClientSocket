@@ -47,7 +47,7 @@ public:
         return 1;
     }
 
-    void write_message(string message){
+    void send_message(string message){
         char * m = new char [message.length() + 1];
         strcpy(m, message.c_str());
         flag = write(sockfd,m,strlen(m));
@@ -56,7 +56,7 @@ public:
         }
     }
 
-    char * get_respond(){
+    char * get_message(){
         char result[65535];
         bzero(result,65535);
         flag = read(sockfd,result,65535);
