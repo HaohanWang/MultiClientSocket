@@ -4,23 +4,28 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+/**
+ * @author haohanwang
+ *
+ */
 public class Client {
-	public static void main(String[] args) throws IOException {
+	private String serverHostname;
+	private int portnum;
+	private Socket echoSocket = null;
+	private PrintWriter out = null;
+	private BufferedReader in = null;
 
-		String test = "{ \"class\" : \"vector\", \"size\" : \"3\", \"type\" : \"float\", \"value\" : { \"0\" : \"7.000000\", \"1\" : \"2.000000\", \"2\" : \"1.000000\"}}";
+	public Client(String serverHostname, int portnum) {
+		this.serverHostname = serverHostname;
+		this.portnum = portnum;
+	}
 
-//		String serverHostname = InetAddress.getByName("localhost").toString();
-		String serverHostname = "localhost";
-		Socket echoSocket = null;
-		PrintWriter out = null;
-		BufferedReader in = null;
-
+	public void connect() {
 		try {
-			echoSocket = new Socket(serverHostname, 55777);
+			echoSocket = new Socket(serverHostname, portnum);
 			out = new PrintWriter(echoSocket.getOutputStream(), true);
 			in = new BufferedReader(new InputStreamReader(
 					echoSocket.getInputStream()));
@@ -32,29 +37,31 @@ public class Client {
 					+ serverHostname);
 			System.exit(1);
 		}
+	}
 
-		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
-				System.in));
-		String userInput;
+	public void send_message(String message) {
+		out.println(message);
+	}
 
-		out.println(test);
-//		System.out.println("echo: " + in.read());
+	public String get_message() {
 		String s = " ";
-		String t = " ";
-		while (s!=null) {
-		    try {
-		        s = in.readLine();
-		    }catch(NullPointerException e) {
-		        in.close();
-		        break;
-		    }
-		    if (s!=null)
-		    	t += s;
+		String t = "";
+		while (s != null) {
+			try {
+				s = in.readLine();
+			} catch (NullPointerException e) {
+				try {
+					in.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				break;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			if (s != null)
+				t += s;
 		}
-		System.out.println(t);
-		out.close();
-		in.close();
-		stdIn.close();
-		echoSocket.close();
+		return t;
 	}
 }
