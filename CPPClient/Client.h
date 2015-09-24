@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <string>
 #include <iostream>
+#include "json/json.h"
 
 using namespace std;
 
@@ -49,7 +50,6 @@ public:
     void write_message(string message){
         char * m = new char [message.length() + 1];
         strcpy(m, message.c_str());
-        cout <<  m << endl;
         flag = write(sockfd,m,strlen(m));
         if (flag < 0) {
             throw std::runtime_error("Error in Writing Message");
@@ -57,9 +57,9 @@ public:
     }
 
     char * get_respond(){
-        char result[65530];
-        bzero(result,65530);
-        flag = read(sockfd,result,255);
+        char result[65535];
+        bzero(result,65535);
+        flag = read(sockfd,result,65535);
         if (flag < 0) {
             throw std::runtime_error("Error in reading message");
         }

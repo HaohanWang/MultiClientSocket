@@ -13,6 +13,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdexcept>
+#include <iostream>
+#include <algorithm>
+
+#include "json/json.h"
+#include "JsonEncoder.h"
+
+using namespace std;
 
 
 class Server {
@@ -21,36 +28,12 @@ private:
     int sockfd, newsockfd; //file descriptors
     int portno; //port number on which the server accepts connections
     socklen_t clilen; //size of the address of the client
-    char buffer[256]; //server reads characters from the socket connection into this buffer.
+    char buffer[65535]; //server reads characters from the socket connection into this buffer.
     struct sockaddr_in serv_addr, cli_addr; //structures containing an internet address
     int flag;
 
 public:
     Server(int protno) { this->portno = protno; }
-
-    void setSockfd(int sockfd) {
-        Server::sockfd = sockfd;
-    }
-
-    void setNewsockfd(int newsockfd) {
-        Server::newsockfd = newsockfd;
-    }
-
-    void setPortno(int portno) {
-        Server::portno = portno;
-    }
-
-    void setClilen(socklen_t clilen) {
-        Server::clilen = clilen;
-    }
-
-    void setServ_addr(const sockaddr_in &serv_addr) {
-        Server::serv_addr = serv_addr;
-    }
-
-    void setCli_addr(const sockaddr_in &cli_addr) {
-        Server::cli_addr = cli_addr;
-    }
 
     int serve() {
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -61,22 +44,26 @@ public:
         serv_addr.sin_addr.s_addr = INADDR_ANY;
         serv_addr.sin_port = htons(portno);
         if (bind(sockfd, (struct sockaddr *) &serv_addr,
-                 sizeof(serv_addr)) < 0){
-            throw std::runtime_error( "ERROR on binding" );
+                 sizeof(serv_addr)) < 0) {
+            throw std::runtime_error("ERROR on binding");
         }
-        listen(sockfd,5);
+        listen(sockfd, 5);
         clilen = sizeof(cli_addr);
         newsockfd = accept(sockfd,
                            (struct sockaddr *) &cli_addr,
                            &clilen);
         if (newsockfd < 0)
-            throw std::runtime_error( "ERROR on accept" );
-        bzero(buffer,256);
-        flag = read(newsockfd,buffer,255);
-        if (flag < 0) throw std::runtime_error( "ERROR reading from socket" );
-        printf("Here is the message: %s\n",buffer);
-        flag = write(newsockfd,"I got your message",18);
-        if (flag < 0) throw std::runtime_error( "ERROR writing to socket" );
+            throw std::runtime_error("ERROR on accept");
+        bzero(buffer, 65535);
+        flag = read(newsockfd, buffer, 65535);
+        if (flag < 0) throw std::runtime_error("ERROR reading from socket");
+
+        vector<float> v = JsonEncoder<float>::decode_vector_main(buffer);
+        std::sort(v.begin(), v.end());
+        string m = JsonEncoder<float>::encode(v);
+        const char *r = m.c_str();
+        flag = write(newsockfd, r, 65535);
+        if (flag < 0) throw std::runtime_error("ERROR writing to socket");
         close(newsockfd);
         close(sockfd);
     }
