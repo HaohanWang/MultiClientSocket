@@ -63,9 +63,21 @@ public class JsonEncoder<T> {
 		return object2string(obj);
 	}
 
-	static public <T> ArrayList<T> decode_vector(String str) {
+	static public <T> ArrayList<T> decode_vector(String s) {
+
+		int len = s.indexOf("\0");
+		String str = s.substring(0, len);
+
 		Map map = (JSONObject) JSONValue.parse(str);
-		
+
+		if (map == null) {
+			System.out.println("Why I am null");
+		}
+
+		if (map.isEmpty()) {
+			System.out.println("How come I am empty");
+		}
+
 		if (!map.get("class").equals("vector")) {
 			System.err.println("This method is only used for List");
 			return null;
@@ -85,7 +97,8 @@ public class JsonEncoder<T> {
 			ArrayList<Float> result = new ArrayList<Float>();
 			Map v_map = (JSONObject) JSONValue.parse(value_);
 			for (int i = 0; i < size_; i++) {
-				result.add((float) Float.parseFloat((String) v_map.get(Integer.toString(i))));
+				result.add((float) Float.parseFloat((String) v_map.get(Integer
+						.toString(i))));
 			}
 			return (ArrayList<T>) result;
 		} else if (type_.equals("string")) {
